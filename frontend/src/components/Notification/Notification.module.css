@@ -1,0 +1,94 @@
+.MainContainer{
+    padding: 1rem;
+
+}
+.MainContainer>h3{
+    letter-spacing: 0.2rem;
+}
+
+.NotificationTab{
+    width: 100%;
+    height: 60px;
+  
+   margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.ProfileContainer{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #F1E7FD;
+    color: #853DC3;
+    font-size: 0.6rem;
+    font-weight: 900;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+.ProfileContainerTwo{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #FCF4ED;
+    color: #CFA678;
+    font-size: 0.6rem;
+    font-weight: 900;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+.ProfileContainerThree{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #E5FAF5;
+    color: #30CAA2;
+    font-size: 0.6rem;
+    font-weight: 900;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+.ProfileContainerFour{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #ffe5e5;
+    color: #ff6666;
+    font-size: 0.6rem;
+    font-weight: 900;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+.DescriptionContainer{
+    display: flex;
+    flex-direction: column;
+    width: 85%;
+}
+.Name{
+    font-size: .8rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+.Description{
+    font-size: .6rem;
+    color: #AAAAAA;
+}
+.Highlight{
+    color: #485CE2;
+}
+.Time{
+    color: #C7C7C7;
+    font-size: 0.5rem;
+    position: absolute;
+    left: 80%;
+    top: 22%;
+}

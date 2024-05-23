@@ -1,0 +1,83 @@
+.MainContainer{
+    width: 62.7vw;
+    height: 10vh;
+  
+    padding-left:1rem ;
+    padding-right: 1rem;
+    display: flex;
+    flex-direction: row;
+   align-items: center;
+   margin-top: 0.1rem;
+   justify-content: space-between;
+
+}
+
+.SearchContainer{
+    display: flex;
+    width: 25%;
+}
+.SearchContainer>img{
+    width: 8%;
+    position: relative;
+    left: 10%;
+    height: 8%;
+}
+.SearchBar{
+    width: 80%;
+    height: 45%;
+    padding-left: 2rem;
+    border: none;
+    background-color: #F8FAFB;
+    outline: none;
+}
+.SearchBar:hover{
+   background-color: #ffffff;
+}
+.SearchBar::placeholder{
+    color: #C1C3C5;
+    font-size: 1rem;
+  
+}
+.RightAlignContainer{
+    display: flex;
+    width: 60%;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.DateContainer{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 20%;
+   
+}
+.DateContainer>img{
+ width: 10%;
+ margin-right: 0.7rem;
+}
+.TodayDate{
+    color: #868887;
+    font-size: 1rem;
+}
+.ProfileMainWrapper{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-end;
+
+    
+    
+}
+
+.ProfilePic>img{
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+.NameWrapper{
+    cursor: pointer;
+    margin-right: 2rem;
+}
+.NameWrapper:hover{
+    color: #455AF7;
+}

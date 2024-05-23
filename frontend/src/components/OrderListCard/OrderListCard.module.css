@@ -1,0 +1,165 @@
+.MainContainer{
+    width: 94%;
+    padding-left: 1.8rem;
+  padding-right: 1.2rem;
+  height: 75px;
+  background-color: #FFFFFF;
+  filter: drop-shadow(0px 4px 20px rgba(0, 0, 0, 0.05));
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  transition: all 0.3s;
+  align-items: center;
+}
+.OrderIdContainer{
+  width: 8%;
+  color: #383838;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+    overflow: hidden !important;
+}
+.CustomerMainContainer{
+  width: 25%;
+  display: flex;
+  align-items: center;
+  margin-left: 5.5rem;
+  justify-content: space-between;
+
+}
+.ImageContainer{
+  width: 25%;
+  border-radius: 6px;
+}
+.ImageContainer>img{
+  width: 100%;
+  border-radius: 6px;
+
+}
+.Name{
+  width: 72%;
+  margin-left: 0.8rem;
+  color: #383838;
+  font-weight: 400;
+}
+.DateContainer{
+  width: 13%;
+  margin-left: 2.5rem;
+  font-size: 0.8rem;
+  color: #383838;
+  font-weight: 400;
+  transition: all 0.3s;
+}
+.OrderAmount{
+  width: 13%;
+  margin-left: 4rem;
+  color: #383838;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.Status{
+  width: 10%;
+  height: 30px;
+  color: #3EC8A5;
+  background-color: #EDFEFA;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 3rem;
+  font-size: 0.8rem;
+}
+.StatusColorList{
+  width: 10%;
+  height: 30px;
+  color: #E9BDBD;
+  background-color: #FEF4F4;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 3rem;
+  font-size: 0.8rem;
+}
+
+/* grid styling */
+.MainContainerGrid{
+  width: 23%;
+  padding-left: 1.8rem;
+padding-right: 1.2rem;
+height: 30vh;
+background-color: #FFFFFF;
+filter: drop-shadow(0px 4px 20px rgba(0, 0, 0, 0.05));
+margin-bottom: 1rem;
+display: flex;
+flex-direction: column;
+margin-right: 2rem;
+ transition: all 0.3s;
+}
+.OrderIdGrid{
+  width: 50%;
+  color: #383838;
+  font-size: 0.9rem;
+  font-weight: 400;
+  display: none;
+}
+.CustomerMainContainerGrid{
+  width: 100%;
+  display: flex;
+  align-items: center;
+
+  flex-direction: column;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+.ImageContainerGrid{
+  width: 30%;
+  border-radius: 6px;
+}
+.ImageContainerGrid>img{
+  width: 100%;
+  border-radius: 6px;
+
+}
+.NameGrid{
+  width: 100%;
+  margin-left: 0.8rem;
+  color: #383838;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+    overflow: hidden !important;
+}
+.DateContainerGrid{
+  display: none;
+  transition: all 0.3s;
+}
+.StatusGrid{
+  margin-top: 1rem;
+  width: 80%;
+  height: 30px;
+  color: #3EC8A5;
+  background-color: #EDFEFA;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ margin-left: 1rem;
+  font-size: 0.8rem;
+}
+.StatusGridColor{
+  margin-top: 1rem;
+  width: 80%;
+  height: 30px;
+  color: #E9BDBD;
+  background-color: #FEF4F4;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ margin-left: 1rem;
+  font-size: 0.8rem;
+}
