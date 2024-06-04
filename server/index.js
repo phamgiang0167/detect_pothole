@@ -5,10 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import path from "path";
-import adminRoutes from "./routes/adminRoutes.js";
-import studentRoutes from "./routes/studentRoutes.js";
-import facultyRoutes from "./routes/facultyRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
+import potholeRoutes from "./routes/potholeRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,15 +19,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'uploads')));
 
-
-app.use("/api/admin", adminRoutes);
-app.use("/api/faculty", facultyRoutes);
-app.use("/api/student", studentRoutes);
 app.use("/api/file", fileRoutes);
+app.use('/api/pothole', potholeRoutes);
 
 const PORT = process.env.PORT || 5002;
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.send("Hello to college erp API");
 });
 
