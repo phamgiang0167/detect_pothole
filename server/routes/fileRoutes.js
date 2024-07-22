@@ -8,9 +8,8 @@ import multer
   from "multer";
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
-router.post('/upload', upload.single('file'), uploadFile);
+router.post('/analyst', uploadFile);
 router.get('/result', getResult);
 
 export default router;
