@@ -2,3 +2,7 @@ flask
 torch
 torchvision
 werkzeug
+opencv-python
+pandas
+requests
+models

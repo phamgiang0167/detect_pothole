@@ -3,16 +3,17 @@ import FormData from 'form-data';
 
 export const uploadFile = async (req, res) => {
   try {
-    const form = new FormData();
-    form.append('file', req.file.buffer, req.file.originalname);
+    console.log(req)
+    // const form = new FormData();
+    // form.append('file', req.file.buffer, req.file.originalname);
 
-    const response = await axios.post('http://127.0.0.1:5001/predict', form, {
-      headers: {
-        ...form.getHeaders()
-      }
-    });
+    // const response = await axios.post('http://127.0.0.1:5001/predict', form, {
+    //   headers: {
+    //     ...form.getHeaders()
+    //   }
+    // });
 
-    const { total_holes, holes, avg_width, avg_length, badness_level, should_across, analysis_image } = response.data;
+    // const { total_holes, holes, avg_width, avg_length, badness_level, should_across, analysis_image } = response.data;
     res.json({ total_holes, holes, avg_width, avg_length, badness_level, should_across, analysis_image });
   } catch (error) {
     res.status(500).send('Error processing image');
