@@ -5,7 +5,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import path from "path";
-import fileRoutes from "./routes/fileRoutes.js";
 import potholeRoutes from "./routes/potholeRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +18,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'uploads')));
 
-app.use("/api/file", fileRoutes);
 app.use('/api/pothole', potholeRoutes);
 
 const PORT = process.env.PORT || 5002;

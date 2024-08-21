@@ -5,6 +5,9 @@ from werkzeug.utils import secure_filename
 import uuid
 import shutil
 from PIL import Image
+import io
+import base64
+
 app = Flask(__name__)
 
 # Đường dẫn tới mô hình YOLOv5
@@ -56,45 +59,51 @@ def analyze_results(results, img_width_cm, img_height_cm):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-    if file:
-        random_suffix = uuid.uuid4().hex
-        # filename = secure_filename(file.filename)
-        converted_file_name = f"{random_suffix}.jpg"
-        
-        # Lưu ảnh gốc vào thư mục uploads
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], converted_file_name)
-        file.save(file_path)
+    data = request.get_json()
+    if 'image' not in data:
+        return jsonify({"error": "No image data"}), 400
+    
+    image_data = data['image']
+    image_bytes = base64.b64decode(image_data)
+    image = Image.open(io.BytesIO(image_bytes))
+    
+    random_suffix = uuid.uuid4().hex
+    converted_file_name = f"{random_suffix}.jpg"
+    
+    # Lưu ảnh gốc vào thư mục uploads
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], converted_file_name)
+    image.save(file_path)
 
-        # Xử lý nhận diện
-        results = model(file_path)
-        
-        # Phân tích kết quả nhận diện
-        num_holes, hole_info, avg_width, avg_length, badness_level, should_across = analyze_results(results, IMAGE_WIDTH_CM, IMAGE_HEIGHT_CM)
-        
-        # Tạo tên tệp mới cho ảnh phân tích từ uuid
-        result_file_path = os.path.join(app.config['ANALYSES_FOLDER'], converted_file_name)
-        
-        # Lưu ảnh phân tích trực tiếp vào thư mục analyses với tên tệp từ uuid
-        results.render()  # Render các kết quả lên hình ảnh
-        img = Image.fromarray(results.ims[0])  # Lấy hình ảnh đầu tiên từ kết quả
-        img.save(result_file_path)  # Lưu hình ảnh vào tệp đích
+    # Xử lý nhận diện
+    results = model(file_path)
+    
+    # Phân tích kết quả nhận diện
+    num_holes, hole_info, avg_width, avg_length, badness_level, should_across = analyze_results(results, IMAGE_WIDTH_CM, IMAGE_HEIGHT_CM)
+    
+    # Tạo tên tệp mới cho ảnh phân tích từ uuid
+    result_file_path = os.path.join(app.config['ANALYSES_FOLDER'], converted_file_name)
+    
+    # Lưu ảnh phân tích trực tiếp vào thư mục analyses với tên tệp từ uuid
+    results.render()  # Render các kết quả lên hình ảnh
+    img = Image.fromarray(results.ims[0])  # Lấy hình ảnh đầu tiên từ kết quả
+    img.save(result_file_path)  # Lưu hình ảnh vào tệp đích
 
-        # Trả về phản hồi
-        return jsonify({
-            "total_holes": num_holes,
-            "holes": hole_info,
-            "avg_width": avg_width,
-            "avg_length": avg_length,
-            "badness_level": badness_level,
-            "should_across": should_across,
-            "analysis_image": result_file_path,
-            "image_id": random_suffix
-        })
+    # Chuyển đổi hình ảnh phân tích sang base64
+    buffered = io.BytesIO()
+    img.save(buffered, format="JPEG")
+    analysis_image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+    # Trả về phản hồi
+    return jsonify({
+        "total_holes": num_holes,
+        "holes": hole_info,
+        "avg_width": avg_width,
+        "avg_length": avg_length,
+        "badness_level": badness_level,
+        "should_across": should_across,
+        "analysis_image": analysis_image_base64,
+        "image_id": random_suffix
+    })
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

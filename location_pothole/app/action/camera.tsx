@@ -5,8 +5,10 @@ import { Button, StyleSheet, Text, ActivityIndicator, View, Image, Modal } from 
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { DOMAIN } from '@/constant'
 import SystemSetting from 'react-native-system-setting';
+import * as Location from 'expo-location';
+import { Api } from '@/constants/Apis';
+import { DefaultLocation } from '@/constants/Numbers';
 
-// Tắt âm lượng
 interface AnalysisResult {
   latitude: number;
   longitude: number;
@@ -21,24 +23,64 @@ interface AnalysisResult {
   shouldAcross: boolean;
   analysisImage: string;
 }
-export default function App() {
-  const [facing, setFacing] = useState<CameraType>('back');
+
+const Tab: React.FC = () => {
+  const [facing, _] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [detecting, setDetecting] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
+  
+  const [location, setLocation] = useState<AppLocation | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>("");
+  // useEffect(() => {
+  //   let intervalId: NodeJS.Timeout;
+  //   if (cameraRef.current && detecting) {
+  //     intervalId = setInterval(() => {
+  //       console.log('start')
+  //       captureFrame();
+  //     }, 10000); // Chụp 1 khung hình mỗi giây
+  //   }
+  //   return () => clearInterval(intervalId);
+  // }, [detecting]);
+
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    if (cameraRef.current && detecting) {
-      intervalId = setInterval(() => {
-        console.log('start')
-        captureFrame();
-      }, 10000); // Chụp 1 khung hình mỗi giây
-    }
-    return () => clearInterval(intervalId);
-  }, [detecting]);
+    (async () => {
+      
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 1000,
+          distanceInterval: 0,
+        },
+        (newLocation) => {
+          const roundedNewLat = Number.parseFloat(newLocation.coords.latitude.toFixed(4))
+          const roundedOldLat = Number.parseFloat((location?.latitude || 0).toFixed(4))
+          const roundedNewLng = Number.parseFloat(newLocation.coords.longitude.toFixed(4))
+          const roundedOldLng = Number.parseFloat((location?.longitude || 0).toFixed(4))
+
+          if (roundedNewLat !== roundedOldLat && roundedNewLng !== roundedOldLng) {
+            setLocation({
+              latitude: newLocation.coords.latitude,
+              longitude: newLocation.coords.longitude,
+              latitudeDelta: DefaultLocation.latitudeDelta,
+              longitudeDelta: DefaultLocation.longitudeDelta,
+              description: DefaultLocation.description,
+            });
+          }
+        }
+      );
+    })();
+  }, []);
+
   if (!permission) {
     // Camera permissions are still loading.
     return <View />;
@@ -53,21 +95,24 @@ export default function App() {
   };
 
   const takePicture = async () => {
-    // if (cameraRef.current) {
-    //   const photo = await cameraRef.current.takePictureAsync({ base64: true });
-    //   if (photo?.base64)
-    //     uploadImage(photo.base64);
-    // }
-    setDetecting(!detecting)
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync({ base64: true });
+      if (photo?.base64)
+        uploadImage(photo.base64);
+    }
+    // setDetecting(!detecting)
   };
 
   const uploadImage = (base64Image: string | undefined) => {
     if (base64Image) {
-      axios.post<AnalysisResult>('https://74e5-118-70-123-35.ngrok-free.app/api/pothole/analyst', { image: base64Image })
-        .then(response => {
-
+      axios.post<AnalysisResult>(Api.analysis,
+        { 
+          image: base64Image,
+          lat: location?.latitude,
+          long: location?.longitude,
+        }
+      ).then(response => {
           if (response.data.totalHoles > 0) {
-            console.log('yes')
             setAnalysisResult(response.data);
             setDetecting(false);
             setModalVisible(true);
@@ -175,3 +220,5 @@ const styles = StyleSheet.create({
     marginTop: -20,
   },
 });
+
+export default Tab;
