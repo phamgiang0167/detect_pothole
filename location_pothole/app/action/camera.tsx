@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, StyleSheet, Text, ActivityIndicator, View, Image, Modal } from 'react-native';
+import { Button, StyleSheet, Text, ActivityIndicator, View, Image, Modal, TouchableOpacity } from 'react-native';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import { DOMAIN } from '@/constant'
-import SystemSetting from 'react-native-system-setting';
 import * as Location from 'expo-location';
 import { Api } from '@/constants/Apis';
 import { DefaultLocation } from '@/constants/Numbers';
@@ -31,24 +29,13 @@ const Tab: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const cameraRef = useRef<CameraView>(null);
-
-  
   const [location, setLocation] = useState<AppLocation | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
-  // useEffect(() => {
-  //   let intervalId: NodeJS.Timeout;
-  //   if (cameraRef.current && detecting) {
-  //     intervalId = setInterval(() => {
-  //       console.log('start')
-  //       captureFrame();
-  //     }, 10000); // Chụp 1 khung hình mỗi giây
-  //   }
-  //   return () => clearInterval(intervalId);
-  // }, [detecting]);
+
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     (async () => {
-      
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
@@ -62,12 +49,12 @@ const Tab: React.FC = () => {
           distanceInterval: 0,
         },
         (newLocation) => {
-          const roundedNewLat = Number.parseFloat(newLocation.coords.latitude.toFixed(4))
-          const roundedOldLat = Number.parseFloat((location?.latitude || 0).toFixed(4))
-          const roundedNewLng = Number.parseFloat(newLocation.coords.longitude.toFixed(4))
-          const roundedOldLng = Number.parseFloat((location?.longitude || 0).toFixed(4))
+          const roundedNewLat = Number.parseFloat(newLocation.coords.latitude.toFixed(4));
+          const roundedOldLat = Number.parseFloat((location?.latitude || 0).toFixed(4));
+          const roundedNewLng = Number.parseFloat(newLocation.coords.longitude.toFixed(4));
+          const roundedOldLng = Number.parseFloat((location?.longitude || 0).toFixed(4));
 
-          if (roundedNewLat !== roundedOldLat && roundedNewLng !== roundedOldLng) {
+          if (roundedNewLat !== roundedOldLat || roundedNewLng !== roundedOldLng) {
             setLocation({
               latitude: newLocation.coords.latitude,
               longitude: newLocation.coords.longitude,
@@ -81,10 +68,22 @@ const Tab: React.FC = () => {
     })();
   }, []);
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
+  useEffect(() => {
+    if (detecting) {
+      intervalIdRef.current = setInterval(() => {
+        captureFrame();
+      }, 10000); // Chụp mỗi 10 giây
+    } else {
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+    };
+  }, [detecting]);
 
   const captureFrame = async () => {
     if (cameraRef.current) {
@@ -96,11 +95,14 @@ const Tab: React.FC = () => {
 
   const takePicture = async () => {
     if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync({ base64: true });
-      if (photo?.base64)
-        uploadImage(photo.base64);
+      if (!detecting) {
+        const photo = await cameraRef.current.takePictureAsync({ base64: true });
+        if (photo?.base64) {
+          uploadImage(photo.base64);
+        }
+      }
+      setDetecting(!detecting);
     }
-    // setDetecting(!detecting)
   };
 
   const uploadImage = (base64Image: string | undefined) => {
@@ -114,23 +116,34 @@ const Tab: React.FC = () => {
       ).then(response => {
           if (response.data.totalHoles > 0) {
             setAnalysisResult(response.data);
-            setDetecting(false);
             setModalVisible(true);
+            setDetecting(false);
+            if (intervalIdRef.current) {
+              clearInterval(intervalIdRef.current);
+              intervalIdRef.current = null;
+            }
           }
         })
         .catch(error => {
           console.error(error);
-          setModalVisible(false);
           setDetecting(false);
+          if (intervalIdRef.current) {
+            clearInterval(intervalIdRef.current);
+            intervalIdRef.current = null;
+          }
         });
     }
   };
 
+  if (!permission) {
+    return <View />;
+  }
+
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+        <Text style={styles.permissionText}>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="Grant Permission" color="#007BFF" />
       </View>
     );
   }
@@ -138,8 +151,10 @@ const Tab: React.FC = () => {
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} mute={true} />
-      <Button onPress={takePicture} title="Detect Bad Road" />
-      {detecting && <ActivityIndicator size="large" color="#ffffff" style={styles.loadingIndicator} />}
+      <TouchableOpacity style={styles.detectButton} onPress={takePicture}>
+        <Text style={styles.detectButtonText}>{detecting ? "Stop Detecting" : "Start Detecting"}</Text>
+      </TouchableOpacity>
+      {detecting && <ActivityIndicator size="large" color="#007BFF" style={styles.loadingIndicator} />}
       {detecting && <Text style={styles.loadingText}>Detecting...</Text>}
       <Modal
         animationType="slide"
@@ -152,18 +167,20 @@ const Tab: React.FC = () => {
           <View style={styles.analysisContainer}>
             {analysisResult && (
               <>
-                <Text>Total Holes: {analysisResult.totalHoles}</Text>
-                <Text>Average Width: {analysisResult.avgWidth} cm</Text>
-                <Text>Average Length: {analysisResult.avgLength} cm</Text>
-                <Text>Badness Level: {analysisResult.badnessLevel}</Text>
-                <Text>Should Across: {analysisResult.shouldAcross ? 'Yes' : 'No'}</Text>
+                <Text style={styles.analysisText}>Total Holes: {analysisResult.totalHoles}</Text>
+                <Text style={styles.analysisText}>Average Width: {analysisResult.avgWidth} cm</Text>
+                <Text style={styles.analysisText}>Average Length: {analysisResult.avgLength} cm</Text>
+                <Text style={styles.analysisText}>Badness Level: {analysisResult.badnessLevel}</Text>
+                <Text style={styles.analysisText}>Should Across: {analysisResult.shouldAcross ? 'Yes' : 'No'}</Text>
                 <Image
                   style={styles.analysisImage}
                   source={{ uri: `data:image/jpeg;base64,${analysisResult.analysisImage}` }}
                 />
               </>
             )}
-            <Button title="Close" onPress={() => setModalVisible(false)} />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -176,41 +193,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'black',
+    backgroundColor: '#f5f5f5',
   },
   camera: {
     flex: 1,
     width: '100%',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  detectButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    margin: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  detectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   loadingText: {
-    color: 'white',
+    color: '#007BFF',
     textAlign: 'center',
     margin: 10,
-  },
-  analysisContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-  },
-  analysisImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'contain',
-  },
-  modalView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-    backgroundColor: 'white',
-    padding: 35,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    fontSize: 16,
   },
   loadingIndicator: {
     position: 'absolute',
@@ -218,6 +230,53 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -20,
     marginTop: -20,
+  },
+  permissionText: {
+    textAlign: 'center',
+    fontSize: 16,
+    margin: 20,
+  },
+  modalView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  analysisContainer: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  analysisText: {
+    fontSize: 16,
+    marginVertical: 5,
+    textAlign: 'center',
+  },
+  analysisImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+    marginVertical: 10,
+  },
+  closeButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

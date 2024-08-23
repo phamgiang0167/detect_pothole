@@ -22,6 +22,9 @@ const MarkerListScreen: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approving, setApproving] = useState<boolean>(false);
+  const [approveSuccess, setApproveSuccess] = useState<boolean>(false);
 
   const fetchMarkers = async (page: number) => {
     if (page > totalPages) return;
@@ -37,14 +40,14 @@ const MarkerListScreen: React.FC = () => {
         params: {
           page,
           limit: 10,
+          status: ["pending", "activated"]
         }
       });
 
       if (!response.data) {
-        throw new Error('error when fetch data')
+        throw new Error('error when fetch data');
       }
       const { data, totalPages } = response.data;
-      console.log(totalPages)
       setMarkers(prevMarkers => [...prevMarkers, ...data]);
       setTotalPages(totalPages);
 
@@ -72,18 +75,21 @@ const MarkerListScreen: React.FC = () => {
 
   const handleImagePress = (image: string) => {
     setSelectedImage(image);
-    setSelectedLocation(null); // Clear the location when an image is selected
+    setSelectedLocation(null);
     setModalVisible(true);
   };
 
   const handleLocationPress = (latitude: number, longitude: number) => {
     setSelectedLocation({ latitude, longitude });
-    setSelectedImage(null); // Clear the image when a location is selected
+    setSelectedImage(null);
     setModalVisible(true);
   };
 
   const handleApprove = async (id: string) => {
     try {
+      setApproving(true);
+      setApprovingId(id);
+
       const response = await axios.post(`${Api.approveMarker}/${id}`);
       if (response.status === 200) {
         setMarkers(prevMarkers =>
@@ -91,9 +97,12 @@ const MarkerListScreen: React.FC = () => {
             marker._id === id ? { ...marker, status: 'activated' } : marker
           )
         );
+        setApproveSuccess(true);
       }
     } catch (error) {
       console.error('Failed to approve marker:', error);
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -115,13 +124,20 @@ const MarkerListScreen: React.FC = () => {
         >
           <MaterialIcons name="location-on" size={24} color="#fff" />
         </TouchableOpacity>
-        {item.status !== 'activated' && (
+        {item.status === 'pending' && (
           <TouchableOpacity
             style={styles.approveButton}
             onPress={() => handleApprove(item._id)}
+            disabled={approving && approvingId === item._id}
           >
-            <FontAwesome name="check" size={20} color="#fff" />
-            <Text style={styles.approveButtonText}>Duyệt</Text>
+            {approving && approvingId === item._id ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <FontAwesome name="check" size={20} color="#fff" />
+                <Text style={styles.approveButtonText}>Duyệt</Text>
+              </>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -138,7 +154,7 @@ const MarkerListScreen: React.FC = () => {
         <FlatList
           data={markers}
           renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item._id}
           onEndReached={loadMoreMarkers}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#0000ff" /> : null}
@@ -181,6 +197,24 @@ const MarkerListScreen: React.FC = () => {
               </TouchableOpacity>
             </>
           ) : null}
+        </View>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal visible={approveSuccess} transparent={true} animationType="slide">
+        <View style={styles.successModalContainer}>
+          <View style={styles.successModalContent}>
+            <Text style={styles.successText}>Duyệt thành công!</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                setApproveSuccess(false);
+                setApprovingId(null);
+              }}
+            >
+              <MaterialIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -273,6 +307,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 25,
     padding: 10,
+  },
+  successModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  successModalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1E90FF',
   },
 });
 

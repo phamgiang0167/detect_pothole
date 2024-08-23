@@ -18,7 +18,7 @@ const Tab: React.FC = () => {
   const [markers, setMarkers] = useState<LatLng[]>([]);
   const [location, setLocation] = useState<Region & { description?: string } | null>(null);
 
-  const detectionRadius = 10000; // Bán kính phát hiện ổ gà (ví dụ: 100 mét)
+  const detectionRadius = 10000; // Bán kính phát hiện ổ gà (ví dụ: 10 km)
   const [alertedMarkers, setAlertedMarkers] = useState<Map<string, number>>(new Map());
   const [flashVisible, setFlashVisible] = useState(false); // Trạng thái hiển thị hiệu ứng chớp
   const [toastVisible, setToastVisible] = useState(false); // Trạng thái hiển thị Toast
@@ -26,7 +26,7 @@ const Tab: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios.get<PagedAnalysisResults>(Api.getMarkers)
+    axios.get<PagedAnalysisResults>(`${Api.getMarkers}?status=activated`)
       .then(response => {
         setLoading(false);
         setCenter({
@@ -54,7 +54,7 @@ const Tab: React.FC = () => {
         const roundedOldLat = Number.parseFloat((location?.latitude || 0).toFixed(4));
         const roundedNewLng = Number.parseFloat(newLocation.coords.longitude.toFixed(4));
         const roundedOldLng = Number.parseFloat((location?.longitude || 0).toFixed(4));
-        if (roundedNewLat !== roundedOldLat && roundedNewLng !== roundedOldLng) {
+        if (roundedNewLat !== roundedOldLat || roundedNewLng !== roundedOldLng) {
           setLocation({
             latitude: newLocation.coords.latitude,
             longitude: newLocation.coords.longitude,
@@ -138,7 +138,7 @@ const Tab: React.FC = () => {
 
   const flashColor = flashAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['transparent', 'rgba(255, 0, 0, 0.5)']
+    outputRange: ['transparent', 'rgba(255, 0, 0, 0.2)'] // Giảm độ mờ của màu chớp
   });
 
   return (
@@ -174,13 +174,7 @@ const Tab: React.FC = () => {
           }}
           title="My location"
           description={location?.description}
-        >
-          <Image
-            source={require('@/assets/images/my-location.png')}
-            style={{ width: 40, height: 40, backgroundColor: '#fff' }}
-            resizeMode="contain"
-          />
-        </Marker>
+        />
       </MapView>
       {flashVisible && (
         <Animated.View
