@@ -155,7 +155,7 @@ const Tab: React.FC = () => {
       >
         {markers.map(marker => (
           <Marker
-            key={`${marker.latitude}${marker.longitude}`}
+            key={`${marker.latitude}${marker.longitude}${Math.random()}`}
             coordinate={marker}
             title="Potholes"
             description="Warning"
